@@ -15,6 +15,10 @@ import klout
 from klout import *
 import twython
 from twython import Twython
+import sys
+import urllib
+from xml.dom import minidom
+from findcoord import geocode
 
 '''OAuth Authentication'''
 consumer_key="PNFPGSNhgTXwqox3aophLg"
@@ -39,7 +43,7 @@ twitter =Twython(consumer_key, consumer_secret,access_token, access_token_secret
 '''
 
 #file = open("tweets.csv",'wb') # save to csv file
-
+#f =open("IndexUsers",'w')
 print api.me().name # api.update_status('Updating using OAuth authentication via Tweepy!')
 
 start = clock()
@@ -47,14 +51,40 @@ print start
 
 '''Specify the stream'''
 class StreamListenerChengjun(tweepy.StreamListener):
+        #geo coordinates
+	'''googleGeocodeUrl = 'http://maps.googleapis.com/maps/api/geocode/xml?'
+
+	def geocode(address):	
+		parms = {'output': 'csv','address': address,'sensor':'false'}
+		url = googleGeocodeUrl + urllib.urlencode(parms)
+		print url
+		resp = urllib.urlopen(url)
+		xmlresp=minidom.parse(resp)
+		print xmlresp.toxml()
+		for element in xmlresp.getElementsByTagName('status'):
+			status= element.firstChild.nodeValue
+		for element in xmlresp.getElementsByTagName('lat'):
+			latitude= element.firstChild.nodeValue
+		for element in xmlresp.getElementsByTagName('lng'):
+			longitude= element.firstChild.nodeValue
+		return status		
+
+	'''
 	def on_status(self, status):
-		try:
+		try:	
+			sample_users={}
 			#tweet = status.text.encode('utf-8')
 			tweet=status.text
 			tweet = tweet.replace('\n', '\\n')
-			#user = status.author.screen_name.encode('utf-8')
-			user = status.author.screen_name
+			user = status.author.screen_name.encode('utf-8')
+			#user = status.author.screen_name
 			userid = status.author.id
+			sample_users['userid']=userid
+			sample_users['screenname']=user
+			user_location=twitter.show_user(screen_name=user)["location"]
+			sample_users['location']=user_location.encode('utf-8')
+			try_loc=geocode(sample_users['location'])
+			#sample_users['location']=try_loc
 			time_at = status.created_at
 			source = status.source
 			tweetid = status.id
@@ -73,21 +103,30 @@ class StreamListenerChengjun(tweepy.StreamListener):
 			# Get klout score of the user
     			score = k.user.score(kloutId=kloutId).get('score')
     			print "User's klout score is: %s" % (score)
+			sample_users['score']=score
 			s=twitter.show_user(screen_name=user)
 			followers=s["followers_count"]
 			print followers 
-			#follower=tweepy.api.followers(userid)
-			#u=tweepy.api.get_user(userid)
-			#print u
-			#print u.followers_count
-			#print len(follower)
-			if score>30 and followers>100:
+			sample_users['followers']=followers
+			print sample_users
+			print try_loc
+			print try_loc=="OK"
+			if score>30 and followers>300 and try_loc=="OK":
+				print user_location
+				print try_loc
 				print 'Index User'
-				f.write(user + '\t')
-				f.write(str(score) + '\t')
-				f.write(str(followers) + '\t')
+				print sample_users
+				#f.write(str(sample_users)+'\n')
+				print str(sample_users['userid'])
+				print str(sample_users['screenname'])
+				print str(sample_users['location'])
+				print str(sample_users['score'])
+				print str(sample_users['followers'])
+				f.write(str(sample_users['userid'])+"\t\t"+str(sample_users['screenname'])+"\t\t"+str(sample_users['location'])+"\t\t"+str(sample_users['score'])+"\t\t"+str(sample_users['followers']))
 				f.write('\n')
-				print "hello"
+				#f.write(user + '\t')
+				#f.write(str(score) + '\t')
+				#f.write(str(followers) + '\t')
 			time.sleep(10)
 			# By default all communication is not secure (HTTP). An optional secure parameter
 			# can be sepcified for secure (HTTPS) communication
@@ -115,10 +154,13 @@ class StreamListenerChengjun(tweepy.StreamListener):
 		return True
 
 '''Link the tube with tweet stream'''
-streamTube = tweepy.Stream(auth=auth1, listener=StreamListenerChengjun(), timeout= 300)  # https://github.com/tweepy/tweepy/issues/83 # setTerms = ['good', 'goodbye', 'goodnight', 'good morning'] # streamer.filter(track = setTerms)
+streamTube = tweepy.Stream(auth=auth1, listener=StreamListenerChengjun(), timeout= 300)  # https://github.com/tweepy/tweepy/issues/83 # setTerms = ['good', 'goodbye', 'goodnight', 'good morning'] #
+#loc=[135.098,34.650,135.299,34.840]
+loc=[-122.75,36.8,-121.75,37.8,-74,40,-73,41]
+#streamTube.filter(locations = loc)
 streamTube.sample()
 
-file.close()
+f.close()
 pass
 
 timePass = time.clock()-start
