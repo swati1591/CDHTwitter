@@ -44,6 +44,8 @@ twitter =Twython(consumer_key, consumer_secret,access_token, access_token_secret
 
 #file = open("tweets.csv",'wb') # save to csv file
 #f =open("IndexUsers",'w')
+fw=open("Tweets_collected",'a')
+findex=open("Index_user_handles",'a')
 print api.me().name # api.update_status('Updating using OAuth authentication via Tweepy!')
 
 start = clock()
@@ -76,6 +78,8 @@ class StreamListenerChengjun(tweepy.StreamListener):
 			#tweet = status.text.encode('utf-8')
 			tweet=status.text
 			tweet = tweet.replace('\n', '\\n')
+			fw.write(tweet.encode('utf-8'))
+			fw.write('\n')
 			user = status.author.screen_name.encode('utf-8')
 			#user = status.author.screen_name
 			userid = status.author.id
@@ -124,6 +128,8 @@ class StreamListenerChengjun(tweepy.StreamListener):
 				print str(sample_users['followers'])
 				f.write(str(sample_users['userid'])+"\t\t"+str(sample_users['screenname'])+"\t\t"+str(sample_users['location'])+"\t\t"+str(sample_users['score'])+"\t\t"+str(sample_users['followers']))
 				f.write('\n')
+				findex.write(str(sample_users['screenname']))
+				findex.write('\n')
 				#f.write(user + '\t')
 				#f.write(str(score) + '\t')
 				#f.write(str(followers) + '\t')
@@ -161,6 +167,8 @@ loc=[-122.75,36.8,-121.75,37.8,-74,40,-73,41]
 streamTube.sample()
 
 f.close()
+fw.close()
+findex.close()
 pass
 
 timePass = time.clock()-start
